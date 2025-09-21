@@ -10,27 +10,29 @@ import AuthService from '../services/authService';
 
 const HomeScreen = ({ user, onLogout }) => {
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          onPress: async () => {
-            try {
-              await AuthService.logout();
-              onLogout();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to logout');
-            }
-          },
-        },
-      ]
-    );
+    try {
+      console.log('Direct logout - starting...');
+
+      // Clear storage directly
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        console.log('Cleared localStorage directly');
+      }
+
+      // Call AuthService logout
+      await AuthService.logout();
+      console.log('AuthService logout completed');
+
+      // Call the parent logout callback
+      onLogout();
+      console.log('Parent onLogout called');
+
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout anyway
+      onLogout();
+    }
   };
 
   return (
@@ -59,7 +61,17 @@ const HomeScreen = ({ user, onLogout }) => {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
+          <Text style={styles.logoutButtonText}>Logout (Direct)</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.logoutButton, {backgroundColor: '#007AFF', marginTop: 10}]}
+          onPress={() => {
+            console.log('Test button clicked - calling onLogout directly');
+            onLogout();
+          }}
+        >
+          <Text style={styles.logoutButtonText}>Test Logout Callback</Text>
         </TouchableOpacity>
       </View>
     </View>

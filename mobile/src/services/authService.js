@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+// Use the working simple auth server
+const API_BASE_URL = 'http://localhost:3001/api';
 
 class AuthService {
   async register(userData) {
@@ -57,16 +58,36 @@ class AuthService {
 
   async logout() {
     try {
+      console.log('Logging out user...');
+
+      // For web compatibility, try both AsyncStorage and localStorage
+      if (typeof window !== 'undefined') {
+        // Web environment - use localStorage as backup
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        console.log('Cleared localStorage');
+      }
+
+      // Also clear AsyncStorage
       await AsyncStorage.multiRemove(['authToken', 'userData']);
+      console.log('Cleared AsyncStorage');
+
     } catch (error) {
       console.error('Logout error:', error);
-      throw error;
+      // Don't throw error - logout should work even if storage fails
     }
   }
 
   async getToken() {
     try {
-      return await AsyncStorage.getItem('authToken');
+      let token = await AsyncStorage.getItem('authToken');
+
+      // Fallback to localStorage for web
+      if (!token && typeof window !== 'undefined') {
+        token = localStorage.getItem('authToken');
+      }
+
+      return token;
     } catch (error) {
       console.error('Get token error:', error);
       return null;
@@ -75,7 +96,13 @@ class AuthService {
 
   async getUser() {
     try {
-      const userData = await AsyncStorage.getItem('userData');
+      let userData = await AsyncStorage.getItem('userData');
+
+      // Fallback to localStorage for web
+      if (!userData && typeof window !== 'undefined') {
+        userData = localStorage.getItem('userData');
+      }
+
       return userData ? JSON.parse(userData) : null;
     } catch (error) {
       console.error('Get user error:', error);
@@ -86,6 +113,11 @@ class AuthService {
   async storeToken(token) {
     try {
       await AsyncStorage.setItem('authToken', token);
+
+      // Also store in localStorage for web
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authToken', token);
+      }
     } catch (error) {
       console.error('Store token error:', error);
       throw error;
@@ -94,7 +126,13 @@ class AuthService {
 
   async storeUser(user) {
     try {
-      await AsyncStorage.setItem('userData', JSON.stringify(user));
+      const userString = JSON.stringify(user);
+      await AsyncStorage.setItem('userData', userString);
+
+      // Also store in localStorage for web
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userData', userString);
+      }
     } catch (error) {
       console.error('Store user error:', error);
       throw error;

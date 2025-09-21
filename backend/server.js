@@ -23,6 +23,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+app.get('/debug', (req, res) => {
+  res.json({
+    message: 'Debug endpoint working',
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      DB_HOST: process.env.DB_HOST ? 'set' : 'not set',
+      JWT_SECRET: process.env.JWT_SECRET ? 'set' : 'not set'
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

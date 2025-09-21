@@ -2,7 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(npm run dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm start)",
+      "Bash(npx expo start:*)",
+      "Bash(psql:*)",
+      "Bash(where postgres)",
+      "Bash(docker:*)",
+      "Bash(npx expo install:*)",
+      "Bash(explorer \"C:\\Users\\robot\\Desktop\\bitnet\\APP_ACCESS.html\")",
+      "Bash(node:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm install:*)",
+      "Bash(npx create-react-app:*)",
+      "Bash(set PORT=3002)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

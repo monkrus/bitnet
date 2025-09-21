@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = process.env.NODE_ENV === 'test' || !process.env.DB_HOST ?
+  require('../models/User.mock') :
+  require('../models/User');
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -7,6 +9,7 @@ const generateToken = (userId) => {
 
 const register = async (req, res) => {
   try {
+    console.log('Registration request received:', req.body);
     const { email, password, firstName, lastName, company, jobTitle } = req.body;
 
     if (!email || !password || !firstName || !lastName) {
@@ -52,9 +55,15 @@ const register = async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error.message || error);
+    if (error.message === 'User with this email already exists') {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
     res.status(500).json({
-      error: 'Internal server error during registration'
+      error: 'Internal server error during registration',
+      details: error.message
     });
   }
 };
