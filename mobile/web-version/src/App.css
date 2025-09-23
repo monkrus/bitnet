@@ -120,6 +120,8 @@
   margin-top: 20px;
   cursor: pointer;
   text-decoration: underline;
+  display: block;
+  width: 100%;
 }
 
 .auth-link:hover {
@@ -195,7 +197,7 @@
 }
 
 .home-footer {
-  padding-bottom: 20px;
+  padding-bottom: 120px;
   display: flex;
   justify-content: center;
 }
@@ -219,6 +221,55 @@
 /* Success message styles */
 .success-message {
   text-align: center;
+}
+
+/* Password input with toggle styles */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+}
+
+/* Company Profile Styles */
+.company-profile-view {
+  text-align: left;
+}
+
+.profile-field {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007AFF;
+}
+
+.profile-field strong {
+  color: #333;
+  margin-right: 8px;
+}
+
+.home-actions {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
 /* Responsive Design */

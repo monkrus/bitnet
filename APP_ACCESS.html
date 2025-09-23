@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BitNet App Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #007AFF; text-align: center; }
+        .link-box { background: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007AFF; }
+        .link { display: block; font-size: 18px; color: #007AFF; text-decoration: none; margin: 10px 0; }
+        .link:hover { text-decoration: underline; }
+        .status { color: #28a745; font-weight: bold; }
+        .info { color: #666; font-size: 14px; }
+        .qr-info { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 BitNet Authentication App</h1>
+
+        <div class="link-box">
+            <h3>📱 Mobile App (Web Version) - WORKING!</h3>
+            <a href="http://localhost:8090" class="link" target="_blank">
+                http://localhost:8090
+            </a>
+            <p class="info">Click to open the mobile app in your browser - FIXED VERSION</p>
+            <p class="status">✅ Status: Running and Working</p>
+        </div>
+
+        <div class="link-box">
+            <h3>🔧 Backend API - WORKING!</h3>
+            <a href="http://localhost:3001" class="link" target="_blank">
+                http://localhost:3001
+            </a>
+            <a href="http://localhost:3001/health" class="link" target="_blank">
+                http://localhost:3001/health (Health Check)
+            </a>
+            <p class="info">FIXED API endpoints for registration and login</p>
+            <p class="status">✅ Status: Running and Working</p>
+        </div>
+
+        <div class="qr-info">
+            <h3>📱 For Mobile Device Testing:</h3>
+            <ol>
+                <li>Install <strong>Expo Go</strong> app from App Store/Play Store</li>
+                <li>Open terminal and look for QR code (if shown)</li>
+                <li>Or manually enter in Expo Go: <code>exp://127.0.0.1:8085</code></li>
+            </ol>
+        </div>
+
+        <div class="link-box">
+            <h3>🧪 Test Authentication Flow:</h3>
+            <ol>
+                <li><strong>Registration:</strong> Create account with email/password</li>
+                <li><strong>Login:</strong> Sign in with credentials</li>
+                <li><strong>Navigation:</strong> Test switching between screens</li>
+                <li><strong>Persistence:</strong> Refresh page - should stay logged in</li>
+                <li><strong>Logout:</strong> Sign out and test login again</li>
+            </ol>
+        </div>
+
+        <div class="info" style="text-align: center; margin-top: 30px;">
+            <p>Sprint 1.1: Authentication System Complete ✅</p>
+            <p>Both servers are running and ready for testing!</p>
+        </div>
+    </div>
+</body>
+</html>

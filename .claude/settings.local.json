@@ -17,7 +17,12 @@
       "Bash(npm install:*)",
       "Bash(npx create-react-app:*)",
       "Bash(set PORT=3002)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(PORT=3003 npm start)",
+      "Bash(pkill:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

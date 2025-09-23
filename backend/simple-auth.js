@@ -2,21 +2,36 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const QRCode = require('qrcode');
+const { dbHelpers } = require('./database');
 
 const app = express();
 const PORT = 3001;
 
-// Simple in-memory storage
-let users = [];
-let nextId = 1;
-let resetTokens = []; // Store reset tokens temporarily
-
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:8090', 'http://localhost:8085', 'http://localhost:8083', 'http://localhost:8082', 'http://localhost:3002'],
+  origin: ['http://localhost:8090', 'http://localhost:8085', 'http://localhost:8083', 'http://localhost:8082', 'http://localhost:3002', 'http://localhost:3003'],
   credentials: true
 }));
 app.use(express.json());
+
+// JWT verification middleware
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, 'simple_secret');
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: 'Invalid or expired token' });
+  }
+};
 
 // Routes
 app.get('/health', (req, res) => {
@@ -36,7 +51,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     // Check if user exists
-    const existingUser = users.find(u => u.email === email);
+    const existingUser = await dbHelpers.getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({
         error: 'User with this email already exists'
@@ -47,18 +62,12 @@ app.post('/api/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = {
-      id: nextId++,
+    const user = await dbHelpers.createUser({
       email,
       password_hash: hashedPassword,
-      first_name: firstName,
-      last_name: lastName,
-      company: company || '',
-      job_title: jobTitle || '',
-      created_at: new Date().toISOString()
-    };
-
-    users.push(user);
+      firstName,
+      lastName
+    });
 
     // Generate token
     const token = jwt.sign({ userId: user.id }, 'simple_secret', { expiresIn: '7d' });
@@ -70,10 +79,8 @@ app.post('/api/auth/register', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        company: user.company,
-        jobTitle: user.job_title
+        firstName: user.firstName,
+        lastName: user.lastName
       },
       token
     });
@@ -102,7 +109,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Find user
-    const user = users.find(u => u.email === email);
+    const user = await dbHelpers.getUserByEmail(email);
     if (!user) {
       return res.status(401).json({
         error: 'Invalid email or password'
@@ -128,9 +135,7 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
-        lastName: user.last_name,
-        company: user.company,
-        jobTitle: user.job_title
+        lastName: user.last_name
       },
       token
     });
@@ -265,6 +270,274 @@ app.post('/api/auth/reset-password', async (req, res) => {
     console.error('Password reset error:', error);
     res.status(500).json({
       error: 'Password reset failed',
+      details: error.message
+    });
+  }
+});
+
+// Company Profile Routes
+
+// Create company profile
+app.post('/api/companies', verifyToken, async (req, res) => {
+  try {
+    console.log('Company profile creation request:', req.body);
+
+    const { name, description, industry, contactEmail, contactPhone, website, address } = req.body;
+
+    if (!name || !industry) {
+      return res.status(400).json({
+        error: 'Company name and industry are required'
+      });
+    }
+
+    // Check if user already has a company
+    const existingCompany = companies.find(c => c.ownerId === req.userId);
+    if (existingCompany) {
+      return res.status(400).json({
+        error: 'User already has a company profile'
+      });
+    }
+
+    // Create company profile
+    const company = {
+      id: nextCompanyId++,
+      ownerId: req.userId,
+      name,
+      description: description || '',
+      industry,
+      contactEmail: contactEmail || '',
+      contactPhone: contactPhone || '',
+      website: website || '',
+      address: address || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    companies.push(company);
+
+    console.log('Company profile created successfully:', company.name);
+
+    res.status(201).json({
+      message: 'Company profile created successfully',
+      company: {
+        id: company.id,
+        name: company.name,
+        description: company.description,
+        industry: company.industry,
+        contactEmail: company.contactEmail,
+        contactPhone: company.contactPhone,
+        website: company.website,
+        address: company.address
+      }
+    });
+
+  } catch (error) {
+    console.error('Company creation error:', error);
+    res.status(500).json({
+      error: 'Company profile creation failed',
+      details: error.message
+    });
+  }
+});
+
+// Get user's company profile
+app.get('/api/companies/my-profile', verifyToken, async (req, res) => {
+  try {
+    const company = companies.find(c => c.ownerId === req.userId);
+
+    if (!company) {
+      return res.status(404).json({
+        error: 'Company profile not found'
+      });
+    }
+
+    res.json({
+      company: {
+        id: company.id,
+        name: company.name,
+        description: company.description,
+        industry: company.industry,
+        contactEmail: company.contactEmail,
+        contactPhone: company.contactPhone,
+        website: company.website,
+        address: company.address
+      }
+    });
+
+  } catch (error) {
+    console.error('Get company profile error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve company profile',
+      details: error.message
+    });
+  }
+});
+
+// Update company profile
+app.put('/api/companies/my-profile', verifyToken, async (req, res) => {
+  try {
+    console.log('Company profile update request:', req.body);
+
+    const { name, description, industry, contactEmail, contactPhone, website, address } = req.body;
+
+    if (!name || !industry) {
+      return res.status(400).json({
+        error: 'Company name and industry are required'
+      });
+    }
+
+    const companyIndex = companies.findIndex(c => c.ownerId === req.userId);
+
+    if (companyIndex === -1) {
+      return res.status(404).json({
+        error: 'Company profile not found'
+      });
+    }
+
+    // Update company profile
+    companies[companyIndex] = {
+      ...companies[companyIndex],
+      name,
+      description: description || '',
+      industry,
+      contactEmail: contactEmail || '',
+      contactPhone: contactPhone || '',
+      website: website || '',
+      address: address || '',
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('Company profile updated successfully:', companies[companyIndex].name);
+
+    res.json({
+      message: 'Company profile updated successfully',
+      company: {
+        id: companies[companyIndex].id,
+        name: companies[companyIndex].name,
+        description: companies[companyIndex].description,
+        industry: companies[companyIndex].industry,
+        contactEmail: companies[companyIndex].contactEmail,
+        contactPhone: companies[companyIndex].contactPhone,
+        website: companies[companyIndex].website,
+        address: companies[companyIndex].address
+      }
+    });
+
+  } catch (error) {
+    console.error('Company update error:', error);
+    res.status(500).json({
+      error: 'Company profile update failed',
+      details: error.message
+    });
+  }
+});
+
+// Get all companies (for browsing)
+app.get('/api/companies', verifyToken, async (req, res) => {
+  try {
+    const allCompanies = companies.map(company => ({
+      id: company.id,
+      name: company.name,
+      description: company.description,
+      industry: company.industry,
+      contactEmail: company.contactEmail,
+      website: company.website,
+      address: company.address
+    }));
+
+    res.json({
+      companies: allCompanies
+    });
+
+  } catch (error) {
+    console.error('Get companies error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve companies',
+      details: error.message
+    });
+  }
+});
+
+// QR Code Routes
+
+// Generate QR code for company profile
+app.get('/api/companies/my-profile/qr', verifyToken, async (req, res) => {
+  try {
+    const company = companies.find(c => c.ownerId === req.userId);
+
+    if (!company) {
+      return res.status(404).json({
+        error: 'Company profile not found'
+      });
+    }
+
+    // Create company data for QR code
+    const qrData = {
+      type: 'bitnet_company',
+      companyId: company.id,
+      name: company.name,
+      industry: company.industry,
+      description: company.description,
+      contactEmail: company.contactEmail,
+      contactPhone: company.contactPhone,
+      website: company.website,
+      address: company.address,
+      url: `http://localhost:3002/company/${company.id}`
+    };
+
+    // Generate QR code as data URL
+    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData), {
+      width: 256,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    res.json({
+      qrCode: qrCodeDataURL,
+      data: qrData
+    });
+
+  } catch (error) {
+    console.error('QR code generation error:', error);
+    res.status(500).json({
+      error: 'Failed to generate QR code',
+      details: error.message
+    });
+  }
+});
+
+// Get company profile by ID (for QR code scanning)
+app.get('/api/companies/:id', verifyToken, async (req, res) => {
+  try {
+    const companyId = parseInt(req.params.id);
+    const company = companies.find(c => c.id === companyId);
+
+    if (!company) {
+      return res.status(404).json({
+        error: 'Company not found'
+      });
+    }
+
+    res.json({
+      company: {
+        id: company.id,
+        name: company.name,
+        description: company.description,
+        industry: company.industry,
+        contactEmail: company.contactEmail,
+        contactPhone: company.contactPhone,
+        website: company.website,
+        address: company.address
+      }
+    });
+
+  } catch (error) {
+    console.error('Get company by ID error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve company',
       details: error.message
     });
   }
