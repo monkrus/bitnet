@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
-const User = process.env.NODE_ENV === 'test' || !process.env.DB_HOST ?
-  require('../models/User.mock') :
-  require('../models/User');
+const bcrypt = require('bcryptjs');
+const { dbHelpers } = require('../database');
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -24,20 +23,19 @@ const register = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findByEmail(email);
+    const existingUser = await dbHelpers.getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({
         error: 'User with this email already exists'
       });
     }
 
-    const user = await User.create({
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await dbHelpers.createUser({
       email,
-      password,
+      password_hash: hashedPassword,
       firstName,
-      lastName,
-      company: company || '',
-      jobTitle: jobTitle || ''
+      lastName
     });
 
     const token = generateToken(user.id);
@@ -47,10 +45,8 @@ const register = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        company: user.company,
-        jobTitle: user.job_title
+        firstName: user.firstName,
+        lastName: user.lastName
       },
       token
     });
@@ -78,14 +74,14 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findByEmail(email);
+    const user = await dbHelpers.getUserByEmail(email);
     if (!user) {
       return res.status(401).json({
         error: 'Invalid email or password'
       });
     }
 
-    const isValidPassword = await User.verifyPassword(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({
         error: 'Invalid email or password'
@@ -100,9 +96,7 @@ const login = async (req, res) => {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
-        lastName: user.last_name,
-        company: user.company,
-        jobTitle: user.job_title
+        lastName: user.last_name
       },
       token
     });

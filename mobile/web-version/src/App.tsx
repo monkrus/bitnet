@@ -1259,43 +1259,35 @@ const HomeScreen = ({ user, onLogout, navigation }: any) => {
           Connect with professionals, attend events, and grow your network.
         </p>
 
-        <div className="home-actions">
+        <div className="home-actions-grid">
           <button
             onClick={() => navigation.navigate('CompanyProfile')}
-            className="auth-button"
-            style={{ marginBottom: '20px' }}
+            className="home-action-button company-button"
           >
             Manage Company Profile
           </button>
 
           <button
             onClick={() => navigation.navigate('QRScanner')}
-            className="auth-button"
-            style={{
-              marginBottom: '20px',
-              backgroundColor: '#6c757d'
-            }}
+            className="home-action-button scanner-button"
           >
             Scan QR Code
           </button>
 
           <button
             onClick={() => navigation.navigate('Contacts')}
-            className="auth-button"
-            style={{
-              marginBottom: '20px',
-              backgroundColor: '#17a2b8'
-            }}
+            className="home-action-button contacts-button"
           >
             View Saved Contacts
           </button>
-        </div>
-      </div>
 
-      <div className="home-footer">
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+          <button
+            onClick={handleLogout}
+            className="home-action-button logout-button-modern"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );

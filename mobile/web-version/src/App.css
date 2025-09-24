@@ -264,6 +264,76 @@
   margin-right: 8px;
 }
 
+/* Modern grid layout for home actions */
+.home-actions-grid {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 600px;
+  width: 100%;
+  padding: 0 20px;
+}
+
+/* Base style for all home action buttons */
+.home-action-button {
+  background-color: #007AFF;
+  border-radius: 12px;
+  padding: 20px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Individual button colors */
+.company-button {
+  background: linear-gradient(135deg, #007AFF, #0056CC);
+}
+
+.scanner-button {
+  background: linear-gradient(135deg, #6c757d, #495057);
+}
+
+.contacts-button {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.logout-button-modern {
+  background: linear-gradient(135deg, #FF3B30, #D70015);
+}
+
+/* Hover effects */
+.home-action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.company-button:hover {
+  background: linear-gradient(135deg, #0056CC, #003d99);
+}
+
+.scanner-button:hover {
+  background: linear-gradient(135deg, #495057, #343a40);
+}
+
+.contacts-button:hover {
+  background: linear-gradient(135deg, #138496, #0f6674);
+}
+
+.logout-button-modern:hover {
+  background: linear-gradient(135deg, #D70015, #b8000f);
+}
+
+/* Legacy home-actions for backward compatibility */
 .home-actions {
   margin-top: 30px;
   display: flex;
@@ -273,9 +343,26 @@
 }
 
 /* Responsive Design */
+@media (max-width: 768px) {
+  .home-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 0 10px;
+  }
+
+  .home-action-button {
+    min-height: 60px;
+    font-size: 15px;
+  }
+}
+
 @media (max-width: 480px) {
   .auth-content {
     padding: 30px 20px;
+  }
+
+  .home-actions-grid {
+    padding: 0;
   }
 
   .auth-title {
