@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import jsQR from 'jsqr';
 
+// Import QRCode with require to avoid TypeScript issues
+const QRCode = require('qrcode');
+
 // Mock AuthService for web
 const AuthService = {
   async login(email: string, password: string) {
-    const response = await fetch('http://localhost:3001/api/auth/login', {
+    const response = await fetch('http://localhost:3007/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -16,7 +19,7 @@ const AuthService = {
   },
 
   async register(userData: any) {
-    const response = await fetch('http://localhost:3001/api/auth/register', {
+    const response = await fetch('http://localhost:3007/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
@@ -41,7 +44,7 @@ const AuthService = {
   },
 
   async forgotPassword(email: string) {
-    const response = await fetch('http://localhost:3001/api/auth/forgot-password', {
+    const response = await fetch('http://localhost:3007/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -52,7 +55,7 @@ const AuthService = {
   },
 
   async resetPassword(token: string, newPassword: string) {
-    const response = await fetch('http://localhost:3001/api/auth/reset-password', {
+    const response = await fetch('http://localhost:3007/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),
@@ -64,7 +67,7 @@ const AuthService = {
 
   async createCompanyProfile(companyData: any) {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3001/api/companies', {
+    const response = await fetch('http://localhost:3007/api/companies', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +82,7 @@ const AuthService = {
 
   async getCompanyProfile() {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3001/api/companies/my-profile', {
+    const response = await fetch('http://localhost:3007/api/companies/my-profile', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -92,7 +95,7 @@ const AuthService = {
 
   async updateCompanyProfile(companyData: any) {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3001/api/companies/my-profile', {
+    const response = await fetch('http://localhost:3007/api/companies/my-profile', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -107,7 +110,7 @@ const AuthService = {
 
   async getAllCompanies() {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3001/api/companies', {
+    const response = await fetch('http://localhost:3007/api/companies', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -120,7 +123,7 @@ const AuthService = {
 
   async generateQRCode() {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3001/api/companies/my-profile/qr', {
+    const response = await fetch('http://localhost:3007/api/companies/my-profile/qr', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -133,7 +136,7 @@ const AuthService = {
 
   async getCompanyById(companyId: number) {
     const token = localStorage.getItem('authToken');
-    const response = await fetch(`http://localhost:3001/api/companies/${companyId}`, {
+    const response = await fetch(`http://localhost:3007/api/companies/${companyId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -668,7 +671,16 @@ const CompanyProfileScreen = ({ navigation }: any) => {
     setQrLoading(true);
     try {
       const response = await AuthService.generateQRCode();
-      setQrCode(response.qrCode);
+      // Convert JSON data to QR code image
+      const qrCodeImageUrl = await QRCode.toDataURL(response.qrCode.data, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCode(qrCodeImageUrl);
     } catch (error: any) {
       alert('Failed to generate QR code: ' + error.message);
     } finally {
@@ -772,6 +784,8 @@ const CompanyProfileScreen = ({ navigation }: any) => {
                     lineHeight: '1.4'
                   }}>
                     Share this QR code with other businesses to exchange contact information instantly!
+                    <br />
+                    <strong>📱 Camera compatible:</strong> Regular camera apps will now open your BitNet profile directly.
                   </p>
                 </div>
               )}
@@ -878,6 +892,21 @@ const QRScannerScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    // Check for pending QR data from URL
+    const pendingData = sessionStorage.getItem('pendingQRData');
+    if (pendingData) {
+      try {
+        const qrData = JSON.parse(pendingData);
+        setScannedData(qrData);
+        sessionStorage.removeItem('pendingQRData');
+      } catch (error) {
+        setError('Invalid QR data from URL');
+        sessionStorage.removeItem('pendingQRData');
+      }
+    }
+  }, []);
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -917,14 +946,35 @@ const QRScannerScreen = ({ navigation }: any) => {
 
             if (qrCode) {
               try {
-                // Parse the QR code data as JSON
-                const qrData = JSON.parse(qrCode.data);
+                const qrCodeData = qrCode.data;
 
-                // Validate that it's a BitNet company QR code
-                if (qrData.type === 'bitnet_company') {
-                  setScannedData(qrData);
+                // Check if it's a URL (new format)
+                if (qrCodeData.startsWith('http://') || qrCodeData.startsWith('https://')) {
+                  // Extract QR data from URL parameter
+                  const url = new URL(qrCodeData);
+                  const qrParam = url.searchParams.get('qr');
+
+                  if (qrParam) {
+                    const qrData = JSON.parse(decodeURIComponent(qrParam));
+
+                    if (qrData.type === 'bitnet_company') {
+                      setScannedData(qrData);
+                    } else {
+                      setError('Invalid QR code: Not a BitNet company QR code');
+                    }
+                  } else {
+                    setError('Invalid QR code: No company data in URL');
+                  }
                 } else {
-                  setError('Invalid QR code: Not a BitNet company QR code');
+                  // Try parsing as JSON (legacy format)
+                  const qrData = JSON.parse(qrCodeData);
+
+                  // Validate that it's a BitNet company QR code
+                  if (qrData.type === 'bitnet_company') {
+                    setScannedData(qrData);
+                  } else {
+                    setError('Invalid QR code: Not a BitNet company QR code');
+                  }
                 }
               } catch (parseErr) {
                 setError('Invalid QR code: Could not parse company data');
@@ -1314,9 +1364,21 @@ function App() {
     // Check for reset token in URL
     const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get('token');
+    const qrParam = urlParams.get('qr');
+
     if (tokenParam) {
       setResetToken(tokenParam);
       setCurrentScreen('ResetPassword');
+    } else if (qrParam) {
+      // Handle QR code data from URL
+      try {
+        const qrData = JSON.parse(decodeURIComponent(qrParam));
+        // Store QR data temporarily and navigate to scanner
+        sessionStorage.setItem('pendingQRData', JSON.stringify(qrData));
+        setCurrentScreen('QRScanner');
+      } catch (error) {
+        console.error('Invalid QR data in URL:', error);
+      }
     }
   }, []);
 
