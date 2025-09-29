@@ -5,7 +5,7 @@ const app = express();
 const PORT = 3007;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for logo uploads
 
 // In-memory users and companies
 const users = [

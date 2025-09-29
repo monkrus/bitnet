@@ -22,7 +22,22 @@
       "Bash(npm run build:*)",
       "Bash(PORT=3003 npm start)",
       "Bash(pkill:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run web:*)",
+      "Bash(sqlite3:*)",
+      "Bash(grep:*)",
+      "Bash(cp:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(PORT=3001 npm start)",
+      "Bash(PORT=3002 npm start)",
+      "Bash(PORT=3005 npm start)",
+      "Bash(PORT=3006 npm start)",
+      "Bash(set PORT=3001)",
+      "Bash(tasklist)",
+      "Bash(PORT=3007 node final-server.js)",
+      "Bash(set PORT=3003)",
+      "mcp__ide__getDiagnostics",
+      "Bash(PORT=3004 npm start)"
     ],
     "deny": [],
     "ask": []

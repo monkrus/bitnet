@@ -75,6 +75,8 @@ npm start
 # Scan QR code with Expo Go app
 ```
 
+
+
 ## 🧪 Testing the Authentication Flow
 
 ### Test Registration (API):
